@@ -1,0 +1,36 @@
+name: Feature request
+description: Suggest a simpler workflow, motion style or integration
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What production problem would this solve?
+      description: Describe the result you want, not only the control you imagine.
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Ideal workflow
+      description: How should an OBS operator discover, configure and trigger it?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Current workaround
+      description: Tell us how you achieve this today, if applicable.
+  - type: dropdown
+    id: canvas
+    attributes:
+      label: Canvas
+      options:
+        - Standard OBS canvas
+        - Vertical or another additional canvas
+        - Both
+        - Not canvas-specific
+    validations:
+      required: true

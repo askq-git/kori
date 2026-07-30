@@ -1,0 +1,9 @@
+/build/
+/release/
+/.vs/
+/.vscode/
+/assets/demo/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb

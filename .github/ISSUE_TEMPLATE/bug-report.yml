@@ -1,0 +1,76 @@
+name: Bug report
+description: Report a repeatable Kori problem
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing Kori. Please remove private information from logs before submitting.
+  - type: input
+    id: kori_version
+    attributes:
+      label: Kori version
+      placeholder: "0.10.0"
+    validations:
+      required: true
+  - type: input
+    id: obs_version
+    attributes:
+      label: OBS Studio version
+      placeholder: "31.1.2"
+    validations:
+      required: true
+  - type: input
+    id: windows_version
+    attributes:
+      label: Windows version
+      placeholder: "Windows 11 24H2"
+    validations:
+      required: true
+  - type: dropdown
+    id: target
+    attributes:
+      label: Target type
+      options:
+        - Individual source
+        - Entire scene
+        - Both
+        - Plugin load or installation
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe what you expected and what occurred instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open...
+        2. Select...
+        3. Press...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Kori log lines
+      description: Paste the relevant OBS log lines containing [Kori].
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I reproduced this with the latest Kori release.
+          required: true
+        - label: I removed passwords, tokens and other private information.
+          required: true
+        - label: This report does not contain security-sensitive details.
+          required: true
