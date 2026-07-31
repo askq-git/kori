@@ -1,4 +1,4 @@
-// Copyright (C) 2026 ASKQ
+// Copyright (C) 2026 ASK Q Limited
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "main-canvas-target-resolver.hpp"
