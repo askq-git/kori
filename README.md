@@ -1,10 +1,13 @@
-# Kori
+# Kori — Smooth Zoom Plugin for OBS Studio
 
-Add smooth camera-style zooms to OBS.
+Kori is a free Windows plugin for OBS Studio that creates smooth,
+camera-style zoom animations without duplicating scenes or configuring
+complex transitions.
 
-Point Kori at a face or anything else you want to highlight. It will smoothly
-zoom towards that point and can return to the exact starting view. You can zoom
-one camera or move the whole scene, including logos, videos and overlays.
+Click a face or object to choose the focus point, then trigger the zoom with a
+hotkey or automatically when a scene becomes active. Kori can return smoothly
+to the exact starting view, zoom one camera or move the whole scene—including
+logos, videos and overlays.
 
 ## See Kori in action
 
@@ -66,6 +69,54 @@ the scene zoomed in, or have it wait and return automatically.
 - Different items with their own saved zoom settings
 - Different scenes with their own focus points and timings
 
+## Why use Kori?
+
+| Feature | Kori |
+| --- | --- |
+| Duplicate scenes required | No |
+| Smooth zoom and return | Yes |
+| Clickable focus-point picker | Yes |
+| Manual hotkey control | Yes |
+| Automatic zoom when a scene becomes active | Yes |
+| Zoom an individual item or the entire scene | Yes |
+
+## Frequently asked questions
+
+### What is Kori?
+
+Kori is a free plugin that adds smooth, camera-style zoom animations to OBS
+Studio on Windows.
+
+### Do I need to duplicate or nest scenes?
+
+No. Kori can animate an item or the entire active scene without requiring a
+duplicate scene.
+
+### Can Kori start a zoom automatically?
+
+Yes. A saved zoom can begin automatically when its scene becomes active. You
+can also add a delay, hold the zoom or return automatically.
+
+### Can I control Kori with a hotkey?
+
+Yes. OBS hotkeys can play the saved zoom and return smoothly to the starting
+view.
+
+### Does Kori collect information about me?
+
+No. Kori does not collect usage information or connect to the internet.
+
+### Which systems does Kori currently support?
+
+The current beta supports Windows 10 and 11, OBS Studio 31.1 or newer and the
+standard OBS canvas. Other operating systems and additional canvases are not
+supported yet.
+
+### Is Kori an official OBS Project plugin?
+
+No. Kori is an independent open-source plugin and is not affiliated with or
+endorsed by the OBS Project.
+
 ## Things to know
 
 - This version supports the standard OBS canvas. Support for additional
@@ -87,6 +138,12 @@ the scene zoomed in, or have it wait and return automatically.
 You can also contact **kori.dev@askq.co.nz**.
 
 Kori does not collect usage information or connect to the internet.
+
+## Trademark acknowledgement
+
+Kori is an independent plugin and is not affiliated with or endorsed by the
+OBS Project. OBS, OBS Studio and the OBS Studio logo are registered trademarks
+of Wizards of OBS LLC.
 
 ## Developer information
 
