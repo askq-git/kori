@@ -4,6 +4,34 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Test-IsAdministrator {
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = [Security.Principal.WindowsPrincipal]::new($identity)
+    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+if (-not (Test-IsAdministrator)) {
+    $arguments = @(
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File", "`"$PSCommandPath`"",
+        "-ObsPath", "`"$ObsPath`""
+    )
+
+    try {
+        $process = Start-Process `
+            -FilePath "powershell.exe" `
+            -Verb RunAs `
+            -ArgumentList $arguments `
+            -Wait `
+            -PassThru
+        exit $process.ExitCode
+    }
+    catch {
+        throw "Administrator permission is required to install Kori. $($_.Exception.Message)"
+    }
+}
+
 $obsExecutable = Join-Path $ObsPath "bin\64bit\obs64.exe"
 if (-not (Test-Path -LiteralPath $obsExecutable)) {
     throw "OBS Studio was not found at '$ObsPath'. Run this script with -ObsPath followed by the correct OBS folder."

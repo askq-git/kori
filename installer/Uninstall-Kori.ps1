@@ -3,6 +3,35 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+function Test-IsAdministrator {
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = [Security.Principal.WindowsPrincipal]::new($identity)
+    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+if (-not (Test-IsAdministrator)) {
+    $arguments = @(
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File", "`"$PSCommandPath`"",
+        "-ObsPath", "`"$ObsPath`""
+    )
+
+    try {
+        $process = Start-Process `
+            -FilePath "powershell.exe" `
+            -Verb RunAs `
+            -ArgumentList $arguments `
+            -Wait `
+            -PassThru
+        exit $process.ExitCode
+    }
+    catch {
+        throw "Administrator permission is required to uninstall Kori. $($_.Exception.Message)"
+    }
+}
+
 if (Get-Process -Name "obs64" -ErrorAction SilentlyContinue) {
     throw "OBS Studio is running. Close OBS completely, then run the uninstaller again."
 }
