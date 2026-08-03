@@ -41,12 +41,16 @@ if (Test-Path -LiteralPath $checksumPath) {
 
 $pluginRoot = Join-Path $packageRoot "plugin"
 $localeRoot = Join-Path $pluginRoot "data\locale"
+$effectsRoot = Join-Path $pluginRoot "data\effects"
 New-Item -ItemType Directory -Force -Path $localeRoot | Out-Null
+New-Item -ItemType Directory -Force -Path $effectsRoot | Out-Null
 
 Copy-Item -LiteralPath $pluginDll `
     -Destination (Join-Path $pluginRoot "kori.dll")
 Copy-Item -LiteralPath (Join-Path $projectRoot "data\locale\en-US.ini") `
     -Destination (Join-Path $localeRoot "en-US.ini")
+Copy-Item -LiteralPath (Join-Path $projectRoot "data\effects\kori-motion-blur.effect") `
+    -Destination (Join-Path $effectsRoot "kori-motion-blur.effect")
 
 $packageFiles = @(
     "BETA-TESTING.md",

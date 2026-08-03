@@ -27,6 +27,13 @@ enum class CompletionMode {
 	AutoReturn = 1,
 };
 
+enum class MotionBlurPreset {
+	Off = 0,
+	Subtle = 1,
+	Cinematic = 2,
+	Strong = 3,
+};
+
 struct AnimationSettings {
 	float zoom_factor = 1.30F;
 	float zoom_duration = 5.0F;
@@ -39,6 +46,7 @@ struct AnimationSettings {
 	float start_delay = 0.0F;
 	float hold_duration = 1.0F;
 	bool reset_on_scene_exit = true;
+	MotionBlurPreset motion_blur = MotionBlurPreset::Off;
 };
 
 } // namespace kori

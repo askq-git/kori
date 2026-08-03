@@ -18,6 +18,7 @@ target_sources(
     src/plugin-main.cpp
     src/core/animation-engine.cpp
     src/core/easing.cpp
+    src/effects/motion-blur-filter.cpp
     src/obs/main-canvas-target-resolver.cpp
     src/settings/focus-preview-widget.cpp
     src/settings/settings-dialog.cpp

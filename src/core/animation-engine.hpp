@@ -59,6 +59,10 @@ private:
 	void restore_snapshot(bool log_result);
 	void begin_zoom();
 	void begin_segment(bool returning, float duration, State state);
+	void start_motion_blur();
+	void update_motion_blur(float normalized_speed);
+	void stop_motion_blur();
+	obs_source_t *motion_blur_target() const;
 	bool has_snapshot() const { return !items_.empty(); }
 
 	std::vector<AnimatedItem> items_;
@@ -69,6 +73,9 @@ private:
 	State state_ = State::Idle;
 	bool automatic_ = false;
 	bool whole_scene_ = false;
+	obs_source_t *motion_blur_source_ = nullptr;
+	obs_source_t *motion_blur_filter_ = nullptr;
+	float previous_eased_ = 0.0F;
 };
 
 } // namespace kori

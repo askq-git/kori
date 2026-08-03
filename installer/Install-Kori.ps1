@@ -43,17 +43,37 @@ if (Get-Process -Name "obs64" -ErrorAction SilentlyContinue) {
 $packageRoot = $PSScriptRoot
 $sourceDll = Join-Path $packageRoot "plugin\kori.dll"
 $sourceLocale = Join-Path $packageRoot "plugin\data\locale\en-US.ini"
+$sourceMotionBlur = Join-Path $packageRoot "plugin\data\effects\kori-motion-blur.effect"
 if (-not (Test-Path -LiteralPath $sourceDll)) {
     throw "The Kori package is incomplete: plugin\kori.dll is missing."
+}
+if (-not (Test-Path -LiteralPath $sourceLocale)) {
+    throw "The Kori package is incomplete: the language file is missing."
+}
+if (-not (Test-Path -LiteralPath $sourceMotionBlur)) {
+    throw "The Kori package is incomplete: the motion blur effect is missing."
 }
 
 $pluginDirectory = Join-Path $ObsPath "obs-plugins\64bit"
 $localeDirectory = Join-Path $ObsPath "data\obs-plugins\kori\locale"
+$effectsDirectory = Join-Path $ObsPath "data\obs-plugins\kori\effects"
 New-Item -ItemType Directory -Force -Path $pluginDirectory | Out-Null
 New-Item -ItemType Directory -Force -Path $localeDirectory | Out-Null
+New-Item -ItemType Directory -Force -Path $effectsDirectory | Out-Null
 
-Copy-Item -LiteralPath $sourceDll -Destination (Join-Path $pluginDirectory "kori.dll") -Force
-Copy-Item -LiteralPath $sourceLocale -Destination (Join-Path $localeDirectory "en-US.ini") -Force
+$installedDll = Join-Path $pluginDirectory "kori.dll"
+$installedLocale = Join-Path $localeDirectory "en-US.ini"
+$installedMotionBlur = Join-Path $effectsDirectory "kori-motion-blur.effect"
+Copy-Item -LiteralPath $sourceDll -Destination $installedDll -Force
+Copy-Item -LiteralPath $sourceLocale -Destination $installedLocale -Force
+Copy-Item -LiteralPath $sourceMotionBlur -Destination $installedMotionBlur -Force
+
+$installedFiles = @($installedDll, $installedLocale, $installedMotionBlur)
+foreach ($installedFile in $installedFiles) {
+    if (-not (Test-Path -LiteralPath $installedFile)) {
+        throw "Kori installation could not be verified: '$installedFile' is missing."
+    }
+}
 
 Write-Host ""
 Write-Host "Kori installed successfully." -ForegroundColor Green

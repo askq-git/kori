@@ -123,6 +123,12 @@ void show_settings_dialog(
 			  "Punch (overshoot)", "Linear"});
 	easing->setCurrentIndex(static_cast<int>(settings.easing));
 
+	auto *motion_blur = new QComboBox(&dialog);
+	motion_blur->addItems({"Off", "Subtle", "Cinematic", "Strong"});
+	motion_blur->setCurrentIndex(static_cast<int>(settings.motion_blur));
+	motion_blur->setToolTip(
+		"Adds natural directional softness only while the camera is moving.");
+
 	auto *activation = new QComboBox(&dialog);
 	activation->addItems({"Manual / hotkey only",
 			      "Automatically when scene becomes active"});
@@ -246,6 +252,7 @@ void show_settings_dialog(
 	form->addRow("Zoom duration", duration);
 	form->addRow("Return duration", return_duration);
 	form->addRow("Motion style", easing);
+	form->addRow("Motion blur", motion_blur);
 	form->addRow("Activation", activation);
 	form->addRow("Start delay", start_delay);
 	form->addRow("After automatic zoom", completion);
@@ -295,6 +302,8 @@ void show_settings_dialog(
 		current.focus_y = preview->focus_y();
 		current.easing =
 			static_cast<EasingPreset>(easing->currentIndex());
+		current.motion_blur = static_cast<MotionBlurPreset>(
+			motion_blur->currentIndex());
 		current.activation =
 			static_cast<ActivationMode>(activation->currentIndex());
 		current.completion =
@@ -312,6 +321,7 @@ void show_settings_dialog(
 			const QSignalBlocker block_duration(duration);
 			const QSignalBlocker block_return(return_duration);
 			const QSignalBlocker block_easing(easing);
+			const QSignalBlocker block_motion_blur(motion_blur);
 			const QSignalBlocker block_activation(activation);
 			const QSignalBlocker block_start_delay(start_delay);
 			const QSignalBlocker block_completion(completion);
@@ -325,6 +335,8 @@ void show_settings_dialog(
 			duration->setValue(current.zoom_duration);
 			return_duration->setValue(current.return_duration);
 			easing->setCurrentIndex(static_cast<int>(current.easing));
+			motion_blur->setCurrentIndex(
+				static_cast<int>(current.motion_blur));
 			activation->setCurrentIndex(
 				static_cast<int>(current.activation));
 			start_delay->setValue(current.start_delay);
@@ -364,6 +376,8 @@ void show_settings_dialog(
 	QObject::connect(return_duration, &QDoubleSpinBox::valueChanged,
 			 &dialog, [mark_dirty](double) { mark_dirty(); });
 	QObject::connect(easing, &QComboBox::currentIndexChanged, &dialog,
+			 [mark_dirty](int) { mark_dirty(); });
+	QObject::connect(motion_blur, &QComboBox::currentIndexChanged, &dialog,
 			 [mark_dirty](int) { mark_dirty(); });
 	QObject::connect(activation, &QComboBox::currentIndexChanged, &dialog,
 			 [mark_dirty](int) { mark_dirty(); });

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "core/animation-engine.hpp"
+#include "effects/motion-blur-filter.hpp"
 #include "obs/main-canvas-target-resolver.hpp"
 #include "settings/settings-dialog.hpp"
 #include "settings/settings-store.hpp"
@@ -396,6 +397,7 @@ void on_open_settings(void *)
 
 bool obs_module_load(void)
 {
+	kori::register_motion_blur_filter();
 	engine = std::make_unique<kori::AnimationEngine>();
 	resolver = std::make_unique<kori::MainCanvasTargetResolver>();
 	engine->set_settings(settings_store.load_defaults());

@@ -38,7 +38,8 @@ if (Get-Process -Name "obs64" -ErrorAction SilentlyContinue) {
 
 $targets = @(
     (Join-Path $ObsPath "obs-plugins\64bit\kori.dll"),
-    (Join-Path $ObsPath "data\obs-plugins\kori\locale\en-US.ini")
+    (Join-Path $ObsPath "data\obs-plugins\kori\locale\en-US.ini"),
+    (Join-Path $ObsPath "data\obs-plugins\kori\effects\kori-motion-blur.effect")
 )
 foreach ($target in $targets) {
     if (Test-Path -LiteralPath $target) {
@@ -48,6 +49,7 @@ foreach ($target in $targets) {
 
 $directories = @(
     (Join-Path $ObsPath "data\obs-plugins\kori\locale"),
+    (Join-Path $ObsPath "data\obs-plugins\kori\effects"),
     (Join-Path $ObsPath "data\obs-plugins\kori")
 )
 foreach ($directory in $directories) {

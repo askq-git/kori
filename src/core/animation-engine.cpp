@@ -4,6 +4,7 @@
 #include "animation-engine.hpp"
 
 #include "easing.hpp"
+#include "../effects/motion-blur-filter.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -29,6 +30,72 @@ vec2 interpolate(const vec2 &from, const vec2 &to, const float amount)
 } // namespace
 
 namespace kori {
+
+obs_source_t *AnimationEngine::motion_blur_target() const
+{
+	if (items_.empty() || !items_.front().target ||
+	    !items_.front().target->get())
+		return nullptr;
+	if (!whole_scene_)
+		return obs_sceneitem_get_source(items_.front().target->get());
+	obs_scene_t *scene = obs_sceneitem_get_scene(items_.front().target->get());
+	return scene ? obs_scene_get_source(scene) : nullptr;
+}
+
+void AnimationEngine::start_motion_blur()
+{
+	stop_motion_blur();
+	if (settings_.motion_blur == MotionBlurPreset::Off)
+		return;
+	obs_source_t *target = motion_blur_target();
+	if (!target)
+		return;
+	motion_blur_source_ = obs_source_get_ref(target);
+	motion_blur_filter_ = create_motion_blur_filter(
+		settings_.focus_x, settings_.focus_y);
+	if (!motion_blur_source_ || !motion_blur_filter_) {
+		stop_motion_blur();
+		blog(LOG_WARNING, "[Kori] Motion blur could not be started");
+		return;
+	}
+	obs_source_filter_add(motion_blur_source_, motion_blur_filter_);
+	previous_eased_ = 0.0F;
+}
+
+void AnimationEngine::update_motion_blur(const float normalized_speed)
+{
+	if (!motion_blur_filter_)
+		return;
+	float maximum = 0.0F;
+	switch (settings_.motion_blur) {
+	case MotionBlurPreset::Subtle:
+		maximum = 0.010F;
+		break;
+	case MotionBlurPreset::Cinematic:
+		maximum = 0.020F;
+		break;
+	case MotionBlurPreset::Strong:
+		maximum = 0.035F;
+		break;
+	case MotionBlurPreset::Off:
+		break;
+	}
+	const float amount = maximum * std::clamp(normalized_speed, 0.0F, 1.5F);
+	update_motion_blur_filter(motion_blur_filter_, amount,
+				  settings_.focus_x, settings_.focus_y);
+}
+
+void AnimationEngine::stop_motion_blur()
+{
+	if (motion_blur_source_ && motion_blur_filter_)
+		obs_source_filter_remove(motion_blur_source_, motion_blur_filter_);
+	if (motion_blur_filter_)
+		obs_source_release(motion_blur_filter_);
+	if (motion_blur_source_)
+		obs_source_release(motion_blur_source_);
+	motion_blur_filter_ = nullptr;
+	motion_blur_source_ = nullptr;
+}
 
 void AnimationEngine::set_settings(const AnimationSettings &settings)
 {
@@ -225,6 +292,7 @@ void AnimationEngine::begin_segment(const bool returning,
 	segment_duration_ = std::max(0.05F, duration);
 	elapsed_ = 0.0F;
 	state_ = state;
+	start_motion_blur();
 }
 
 void AnimationEngine::begin_zoom()
@@ -251,6 +319,7 @@ void AnimationEngine::return_to_start()
 
 void AnimationEngine::restore_snapshot(const bool log_result)
 {
+	stop_motion_blur();
 	if (!has_snapshot())
 		return;
 	for (auto &item : items_) {
@@ -319,6 +388,11 @@ void AnimationEngine::tick(const float seconds)
 	const float progress =
 		std::clamp(elapsed_ / segment_duration_, 0.0F, 1.0F);
 	const float eased = apply_easing(progress, settings_.easing);
+	const float frame_seconds = std::max(seconds, 0.0001F);
+	const float normalized_speed =
+		std::abs(eased - previous_eased_) / frame_seconds;
+	update_motion_blur(normalized_speed);
+	previous_eased_ = eased;
 	for (auto &item : items_) {
 		obs_transform_info current = item.original_transform;
 		current.pos = interpolate(item.segment_from_position,
@@ -338,6 +412,7 @@ void AnimationEngine::tick(const float seconds)
 
 	if (progress < 1.0F)
 		return;
+	stop_motion_blur();
 	if (state_ == State::Returning) {
 		restore_snapshot(true);
 	} else if (automatic_ &&

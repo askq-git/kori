@@ -19,6 +19,7 @@ constexpr const char *setting_names[] = {
 	"FocusX",          "FocusY",       "Easing",
 	"Activation",      "Completion",   "StartDelay",
 	"HoldDuration",    "ResetOnSceneExit",
+	"MotionBlur",
 };
 
 void remove_settings(config_t *config, const char *section)
@@ -87,6 +88,14 @@ void read_settings(config_t *config, const char *section,
 	if (config_has_user_value(config, section, "ResetOnSceneExit"))
 		settings.reset_on_scene_exit = config_get_bool(
 			config, section, "ResetOnSceneExit");
+	if (config_has_user_value(config, section, "MotionBlur")) {
+		const int value = static_cast<int>(
+			config_get_int(config, section, "MotionBlur"));
+		if (value >= static_cast<int>(kori::MotionBlurPreset::Off) &&
+		    value <= static_cast<int>(kori::MotionBlurPreset::Strong))
+			settings.motion_blur =
+				static_cast<kori::MotionBlurPreset>(value);
+	}
 }
 
 void write_settings(config_t *config, const char *section,
@@ -110,6 +119,8 @@ void write_settings(config_t *config, const char *section,
 			  settings.hold_duration);
 	config_set_bool(config, section, "ResetOnSceneExit",
 			settings.reset_on_scene_exit);
+	config_set_int(config, section, "MotionBlur",
+		       static_cast<int>(settings.motion_blur));
 }
 
 std::string scene_profile_section(const obs_source_t *scene_source)

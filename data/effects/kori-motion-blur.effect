@@ -1,0 +1,48 @@
+uniform float4x4 ViewProj;
+uniform texture2d image;
+uniform float amount;
+uniform float2 focus;
+
+sampler_state linear_clamp {
+	Filter = Linear;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv : TEXCOORD0;
+};
+
+VertData VSDefault(VertData input)
+{
+	VertData output;
+	output.pos = mul(float4(input.pos.xyz, 1.0), ViewProj);
+	output.uv = input.uv;
+	return output;
+}
+
+float4 PSBlur(VertData input) : TARGET
+{
+	float2 ray = input.uv - focus;
+	float2 step = ray * amount;
+	float4 color = image.Sample(linear_clamp, input.uv) * 0.20;
+	color += image.Sample(linear_clamp, input.uv - step * 0.25) * 0.15;
+	color += image.Sample(linear_clamp, input.uv + step * 0.25) * 0.15;
+	color += image.Sample(linear_clamp, input.uv - step * 0.50) * 0.12;
+	color += image.Sample(linear_clamp, input.uv + step * 0.50) * 0.12;
+	color += image.Sample(linear_clamp, input.uv - step * 0.75) * 0.09;
+	color += image.Sample(linear_clamp, input.uv + step * 0.75) * 0.09;
+	color += image.Sample(linear_clamp, input.uv - step) * 0.04;
+	color += image.Sample(linear_clamp, input.uv + step) * 0.04;
+	return color;
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = VSDefault(input);
+		pixel_shader = PSBlur(input);
+	}
+}
