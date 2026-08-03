@@ -8,10 +8,29 @@
 #include <util/config-file.h>
 
 #include <string>
+#include <vector>
 
 namespace {
 
 constexpr const char *defaults_section = "Kori";
+
+constexpr const char *setting_names[] = {
+	"ZoomFactor",       "ZoomDuration", "ReturnDuration",
+	"FocusX",          "FocusY",       "Easing",
+	"Activation",      "Completion",   "StartDelay",
+	"HoldDuration",    "ResetOnSceneExit",
+};
+
+void remove_settings(config_t *config, const char *section)
+{
+	for (const char *name : setting_names)
+		config_remove_value(config, section, name);
+}
+
+bool starts_with(const std::string &value, const char *prefix)
+{
+	return value.rfind(prefix, 0) == 0;
+}
 
 void read_settings(config_t *config, const char *section,
 		   kori::AnimationSettings &settings)
@@ -303,6 +322,87 @@ void SettingsStore::clear_automatic_target(
 	if (!config || section.empty())
 		return;
 	config_remove_value(config, section.c_str(), "AutomaticTargetItemId");
+	config_save_safe(config, "tmp", nullptr);
+}
+
+AnimationSettings SettingsStore::reset_for(const obs_sceneitem_t *item) const
+{
+	AnimationSettings defaults;
+	config_t *config = obs_frontend_get_user_config();
+	const std::string profile = profile_section(item);
+	if (!config || !item || profile.empty())
+		return defaults;
+
+	remove_settings(config, profile.c_str());
+
+	obs_scene_t *scene = obs_sceneitem_get_scene(item);
+	obs_source_t *scene_source = scene ? obs_scene_get_source(scene) : nullptr;
+	const std::string scene_profile = scene_section(scene_source);
+	if (!scene_profile.empty()) {
+		const int64_t item_id = obs_sceneitem_get_id(item);
+		config_set_int(config, scene_profile.c_str(),
+			       "ManualTargetItemId", item_id);
+		if (automatic_target_item_id_for(scene_source) == item_id)
+			config_remove_value(config, scene_profile.c_str(),
+					    "AutomaticTargetItemId");
+		config_remove_value(config, scene_profile.c_str(), "TargetItemId");
+	}
+
+	config_save_safe(config, "tmp", nullptr);
+	return defaults;
+}
+
+AnimationSettings
+SettingsStore::reset_for_scene(const obs_source_t *scene_source) const
+{
+	AnimationSettings defaults;
+	config_t *config = obs_frontend_get_user_config();
+	const std::string profile = scene_profile_section(scene_source);
+	const std::string scene_profile = scene_section(scene_source);
+	if (!config || profile.empty() || scene_profile.empty())
+		return defaults;
+
+	remove_settings(config, profile.c_str());
+	config_set_int(config, scene_profile.c_str(), "ManualTargetItemId",
+		       EntireSceneTargetId);
+	if (automatic_target_item_id_for(scene_source) == EntireSceneTargetId)
+		config_remove_value(config, scene_profile.c_str(),
+				    "AutomaticTargetItemId");
+	config_remove_value(config, scene_profile.c_str(), "TargetItemId");
+	config_save_safe(config, "tmp", nullptr);
+	return defaults;
+}
+
+void SettingsStore::reset_all() const
+{
+	config_t *config = obs_frontend_get_user_config();
+	if (!config)
+		return;
+
+	std::vector<std::string> sections;
+	const size_t count = config_num_sections(config);
+	sections.reserve(count);
+	for (size_t index = 0; index < count; ++index) {
+		const char *section = config_get_section(config, index);
+		if (section)
+			sections.emplace_back(section);
+	}
+
+	for (const std::string &section : sections) {
+		if (section == defaults_section ||
+		    starts_with(section, "Kori.Profile.") ||
+		    starts_with(section, "Kori.SceneProfile.")) {
+			remove_settings(config, section.c_str());
+		}
+		if (starts_with(section, "Kori.Scene.")) {
+			config_remove_value(config, section.c_str(),
+					    "ManualTargetItemId");
+			config_remove_value(config, section.c_str(),
+					    "AutomaticTargetItemId");
+			config_remove_value(config, section.c_str(), "TargetItemId");
+		}
+	}
+
 	config_save_safe(config, "tmp", nullptr);
 }
 

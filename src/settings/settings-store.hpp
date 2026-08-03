@@ -32,6 +32,9 @@ public:
 	void set_manual_target(const obs_source_t *scene_source,
 			       int64_t item_id) const;
 	void clear_automatic_target(const obs_source_t *scene_source) const;
+	AnimationSettings reset_for(const obs_sceneitem_t *item) const;
+	AnimationSettings reset_for_scene(const obs_source_t *scene_source) const;
+	void reset_all() const;
 
 private:
 	static std::string profile_section(const obs_sceneitem_t *item);

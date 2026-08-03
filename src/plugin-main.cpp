@@ -364,10 +364,31 @@ void on_open_settings(void *)
 		if (engine)
 			engine->return_to_start();
 	};
+	const auto reset_target = [current_scene](const int64_t item_id) {
+		kori::AnimationSettings defaults;
+		if (item_id == kori::EntireSceneTargetId)
+			defaults = settings_store.reset_for_scene(current_scene);
+		else {
+			auto item = resolver->resolve_item_by_id(item_id);
+			if (item)
+				defaults = settings_store.reset_for(item->get());
+		}
+		if (engine)
+			engine->set_settings(defaults);
+		blog(LOG_INFO, "[Kori] Restored factory defaults for current target");
+		return defaults;
+	};
+	const auto reset_all = []() {
+		settings_store.reset_all();
+		if (engine)
+			engine->set_settings(kori::AnimationSettings{});
+		blog(LOG_INFO, "[Kori] Reset all saved Kori settings");
+	};
 	kori::show_settings_dialog(
 		parent, resolver->current_scene_name(), targets,
 		selected_item_id, automatic_target_id, updated, load_settings,
-		source_for_target, save_settings, preview_zoom, preview_return);
+		source_for_target, save_settings, reset_target, reset_all,
+		preview_zoom, preview_return);
 	obs_source_release(current_scene);
 }
 

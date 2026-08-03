@@ -28,6 +28,8 @@ void show_settings_dialog(
 	const std::function<AnimationSettings(int64_t)> &load_settings,
 	const std::function<obs_source_t *(int64_t)> &source_for_target,
 	const std::function<bool(int64_t, const AnimationSettings &)> &save_settings,
+	const std::function<AnimationSettings(int64_t)> &reset_target,
+	const std::function<void()> &reset_all,
 	const std::function<void(int64_t, const AnimationSettings &)> &preview_zoom,
 	const std::function<void()> &preview_return);
 

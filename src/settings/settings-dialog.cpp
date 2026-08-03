@@ -31,6 +31,8 @@ void show_settings_dialog(
 	const std::function<AnimationSettings(int64_t)> &load_settings,
 	const std::function<obs_source_t *(int64_t)> &source_for_target,
 	const std::function<bool(int64_t, const AnimationSettings &)> &save_settings,
+	const std::function<AnimationSettings(int64_t)> &reset_target,
+	const std::function<void()> &reset_all,
 	const std::function<void(int64_t, const AnimationSettings &)> &preview_zoom,
 	const std::function<void()> &preview_return)
 {
@@ -471,6 +473,62 @@ void show_settings_dialog(
 			 });
 	QObject::connect(return_preview, &QPushButton::clicked, &dialog,
 			 [preview_return]() { preview_return(); });
+
+	auto *reset_buttons = new QDialogButtonBox(&dialog);
+	auto *reset_current = reset_buttons->addButton(
+		"Restore defaults for this target", QDialogButtonBox::ActionRole);
+	auto *reset_everything = reset_buttons->addButton(
+		"Reset all Kori settings...", QDialogButtonBox::ActionRole);
+	layout->addWidget(reset_buttons);
+
+	QObject::connect(
+		reset_current, &QPushButton::clicked, &dialog,
+		[&]() {
+			const QString target_name = QString::fromStdString(
+				targets[static_cast<size_t>(current_target_index)].name);
+			const auto choice = QMessageBox::question(
+				&dialog, "Restore Kori defaults",
+				QString("Restore Kori's default zoom settings for %1?\n\n"
+					"This will also turn off automatic activation for this target. "
+					"Your OBS source and scene will not be changed.")
+					.arg(target_name),
+				QMessageBox::Yes | QMessageBox::Cancel,
+				QMessageBox::Cancel);
+			if (choice != QMessageBox::Yes)
+				return;
+
+			preview_return();
+			const AnimationSettings defaults = reset_target(current_target_id);
+			apply_settings(defaults);
+			if (automatic_target_item_id == current_target_id)
+				automatic_target_item_id = -1;
+			refresh_target_labels();
+			dirty = false;
+			save_status->setText(QString("Defaults restored for %1").arg(target_name));
+		});
+
+	QObject::connect(
+		reset_everything, &QPushButton::clicked, &dialog,
+		[&]() {
+			const auto choice = QMessageBox::warning(
+				&dialog, "Reset all Kori settings",
+				"Remove every saved Kori target, focus point, timing and automatic "
+				"scene trigger?\n\nYour OBS scenes, sources and hotkeys will not be changed.",
+				QMessageBox::Reset | QMessageBox::Cancel,
+				QMessageBox::Cancel);
+			if (choice != QMessageBox::Reset)
+				return;
+
+			preview_return();
+			reset_all();
+			const AnimationSettings defaults;
+			apply_settings(defaults);
+			automatic_target_item_id = -1;
+			refresh_target_labels();
+			dirty = false;
+			save_status->setText("All saved Kori settings were reset");
+		});
+
 	auto *separator = new QFrame(&dialog);
 	separator->setFrameShape(QFrame::HLine);
 	separator->setFrameShadow(QFrame::Sunken);
