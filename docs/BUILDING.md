@@ -70,8 +70,8 @@ After a successful Release build:
 The packaging script uses an explicit list of approved files and creates:
 
 ```text
-release\Kori-0.10.0-Windows-x64.zip
-release\Kori-0.10.0-Windows-x64.zip.sha256
+release\Kori-0.12.0-Windows-x64.zip
+release\Kori-0.12.0-Windows-x64.zip.sha256
 ```
 
 ## Manual installation

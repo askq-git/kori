@@ -1,5 +1,14 @@
 # Help test Kori
 
+## 0.12 priority checks
+
+- Camera Styles apply visibly different, production-appropriate movement.
+- Fine-tune expands cleanly and edited presets become Custom.
+- Motion blur appears only while the target is moving.
+- Play, Return and Open Settings hotkeys survive several OBS restarts.
+- Installing 0.12 over an older version preserves settings and hotkeys.
+- The installer correctly reports the current and incoming versions.
+
 Thanks for trying the Kori Windows beta.
 
 Kori adds smooth camera-style zooms to normal OBS scenes. This beta is intended

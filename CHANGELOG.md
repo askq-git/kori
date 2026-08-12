@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.12.0
+
+- Added five ready-made Camera Styles: Natural Push, Slow Drama,
+  Documentary Push, Punch In and Awkward Zoom.
+- Added a compact movement summary and collapsible Fine-tune controls.
+- Grouped settings into Camera movement, Playback and Focus.
+- Added Subtle, Cinematic and Strong motion-blur options during movement.
+- Added safe per-target and full Kori settings reset controls.
+- Preserved Kori hotkey bindings across OBS restarts and plugin upgrades.
+- Added version-aware installation, upgrade, repair and uninstall guidance.
+- Added file-by-file installation verification and clearer completion messages.
+
 ## 0.10.0
 
 - Established **Kori** as the project and plugin name.

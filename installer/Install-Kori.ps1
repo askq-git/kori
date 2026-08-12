@@ -44,6 +44,7 @@ $packageRoot = $PSScriptRoot
 $sourceDll = Join-Path $packageRoot "plugin\kori.dll"
 $sourceLocale = Join-Path $packageRoot "plugin\data\locale\en-US.ini"
 $sourceMotionBlur = Join-Path $packageRoot "plugin\data\effects\kori-motion-blur.effect"
+$sourceVersion = Join-Path $packageRoot "VERSION.txt"
 if (-not (Test-Path -LiteralPath $sourceDll)) {
     throw "The Kori package is incomplete: plugin\kori.dll is missing."
 }
@@ -52,6 +53,9 @@ if (-not (Test-Path -LiteralPath $sourceLocale)) {
 }
 if (-not (Test-Path -LiteralPath $sourceMotionBlur)) {
     throw "The Kori package is incomplete: the motion blur effect is missing."
+}
+if (-not (Test-Path -LiteralPath $sourceVersion)) {
+    throw "The Kori package is incomplete: VERSION.txt is missing."
 }
 
 $pluginDirectory = Join-Path $ObsPath "obs-plugins\64bit"
@@ -64,17 +68,33 @@ New-Item -ItemType Directory -Force -Path $effectsDirectory | Out-Null
 $installedDll = Join-Path $pluginDirectory "kori.dll"
 $installedLocale = Join-Path $localeDirectory "en-US.ini"
 $installedMotionBlur = Join-Path $effectsDirectory "kori-motion-blur.effect"
-Copy-Item -LiteralPath $sourceDll -Destination $installedDll -Force
-Copy-Item -LiteralPath $sourceLocale -Destination $installedLocale -Force
-Copy-Item -LiteralPath $sourceMotionBlur -Destination $installedMotionBlur -Force
+$installedVersion = Join-Path (Split-Path $localeDirectory -Parent) "version.txt"
+$files = @(
+    @{ Name = "Kori plugin"; Source = $sourceDll; Destination = $installedDll },
+    @{ Name = "English interface text"; Source = $sourceLocale; Destination = $installedLocale },
+    @{ Name = "Motion blur effect"; Source = $sourceMotionBlur; Destination = $installedMotionBlur },
+    @{ Name = "Installed version information"; Source = $sourceVersion; Destination = $installedVersion }
+)
 
-$installedFiles = @($installedDll, $installedLocale, $installedMotionBlur)
-foreach ($installedFile in $installedFiles) {
-    if (-not (Test-Path -LiteralPath $installedFile)) {
-        throw "Kori installation could not be verified: '$installedFile' is missing."
+Write-Host ""
+Write-Host "Applying Kori files..."
+foreach ($file in $files) {
+    $replacing = Test-Path -LiteralPath $file.Destination
+    Copy-Item -LiteralPath $file.Source -Destination $file.Destination -Force
+    if (-not (Test-Path -LiteralPath $file.Destination)) {
+        throw "Kori installation could not be verified: '$($file.Destination)' is missing."
     }
+    $sourceHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $file.Source).Hash
+    $installedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $file.Destination).Hash
+    if ($sourceHash -ne $installedHash) {
+        throw "Kori installation verification failed for '$($file.Destination)'."
+    }
+    $result = if ($replacing) { "Replaced" } else { "Installed" }
+    Write-Host "  [$result] $($file.Name)"
 }
 
 Write-Host ""
 Write-Host "Kori installed successfully." -ForegroundColor Green
+Write-Host "All installed files were verified."
+Write-Host "OBS scenes, hotkeys and saved Kori settings were not changed."
 Write-Host "Start OBS, then look for Kori Settings under Tools."

@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$Version = "0.10.0"
+    [string]$Version = "0.12.0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -12,9 +12,16 @@ $packageName = "Kori-$Version-Windows-x64"
 $packageRoot = Join-Path $releaseRoot $packageName
 $zipPath = Join-Path $releaseRoot "$packageName.zip"
 $checksumPath = "$zipPath.sha256"
-$pluginDll = Join-Path $projectRoot "build\windows-x64\Release\kori.dll"
+$pluginCandidates = @(
+    (Join-Path $projectRoot "build\windows-x64\Release\kori.dll"),
+    (Join-Path $projectRoot "build\nmake-x64\kori.dll")
+)
+$pluginDll = $pluginCandidates |
+    Where-Object { Test-Path -LiteralPath $_ } |
+    Sort-Object { (Get-Item -LiteralPath $_).LastWriteTimeUtc } -Descending |
+    Select-Object -First 1
 
-if (-not (Test-Path -LiteralPath $pluginDll)) {
+if (-not $pluginDll) {
     throw "kori.dll was not found. Build Kori before creating the package."
 }
 
@@ -45,6 +52,12 @@ $effectsRoot = Join-Path $pluginRoot "data\effects"
 New-Item -ItemType Directory -Force -Path $localeRoot | Out-Null
 New-Item -ItemType Directory -Force -Path $effectsRoot | Out-Null
 
+$semanticVersion = ([regex]::Match($Version, '^\d+\.\d+\.\d+')).Value
+if (-not $semanticVersion) {
+    throw "Version must begin with a semantic version such as 0.12.0."
+}
+$semanticVersion | Set-Content -LiteralPath (Join-Path $packageRoot "VERSION.txt") -Encoding ascii
+
 Copy-Item -LiteralPath $pluginDll `
     -Destination (Join-Path $pluginRoot "kori.dll")
 Copy-Item -LiteralPath (Join-Path $projectRoot "data\locale\en-US.ini") `
@@ -57,7 +70,7 @@ $packageFiles = @(
     "LICENSE",
     "NOTICE.md",
     "README.md",
-    "RELEASE-NOTES-0.10.0.md",
+    "RELEASE-NOTES-0.12.0.md",
     "SECURITY.md",
     "SUPPORT.md",
     "TROUBLESHOOTING.md",
@@ -72,6 +85,7 @@ foreach ($relativePath in $packageFiles) {
 $installerFiles = @(
     "Install Kori.cmd",
     "Install-Kori.ps1",
+    "Get-Kori-Version.ps1",
     "Uninstall Kori.cmd",
     "Uninstall-Kori.ps1"
 )

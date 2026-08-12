@@ -16,6 +16,7 @@
 #include <obs-module.h>
 #include <string>
 #include <unordered_map>
+#include <util/config-file.h>
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("kori", "en-US")
@@ -34,6 +35,52 @@ kori::SettingsStore settings_store;
 obs_hotkey_id play_hotkey = OBS_INVALID_HOTKEY_ID;
 obs_hotkey_id reset_hotkey = OBS_INVALID_HOTKEY_ID;
 obs_hotkey_id open_settings_hotkey = OBS_INVALID_HOTKEY_ID;
+
+void load_hotkey_binding(const obs_hotkey_id id, const char *name)
+{
+	if (id == OBS_INVALID_HOTKEY_ID)
+		return;
+	config_t *config = obs_frontend_get_user_config();
+	if (!config)
+		return;
+	const char *json = config_get_string(config, "Hotkeys", name);
+	if (!json || !*json)
+		return;
+	obs_data_t *data = obs_data_create_from_json(json);
+	if (!data)
+		return;
+	obs_data_array_t *bindings = obs_data_get_array(data, "bindings");
+	if (bindings) {
+		obs_hotkey_load(id, bindings);
+		obs_data_array_release(bindings);
+	}
+	obs_data_release(data);
+}
+
+void save_hotkey_binding(const obs_hotkey_id id, const char *name)
+{
+	if (id == OBS_INVALID_HOTKEY_ID)
+		return;
+	config_t *config = obs_frontend_get_user_config();
+	if (!config)
+		return;
+	obs_data_array_t *bindings = obs_hotkey_save(id);
+	obs_data_t *data = obs_data_create();
+	obs_data_set_array(data, "bindings", bindings);
+	config_set_string(config, "Hotkeys", name, obs_data_get_json(data));
+	obs_data_release(data);
+	obs_data_array_release(bindings);
+}
+
+void save_hotkey_bindings()
+{
+	save_hotkey_binding(play_hotkey, "kori.play");
+	save_hotkey_binding(reset_hotkey, "kori.reset");
+	save_hotkey_binding(open_settings_hotkey, "kori.open_settings");
+	config_t *config = obs_frontend_get_user_config();
+	if (config)
+		config_save_safe(config, "tmp", nullptr);
+}
 
 void trigger_current_scene_if_configured()
 {
@@ -123,6 +170,7 @@ void on_frontend_event(const enum obs_frontend_event event, void *)
 		break;
 	case OBS_FRONTEND_EVENT_SCENE_COLLECTION_CLEANUP:
 	case OBS_FRONTEND_EVENT_EXIT:
+		save_hotkey_bindings();
 		engine->restore_immediately();
 		break;
 	default:
@@ -410,6 +458,9 @@ bool obs_module_load(void)
 	open_settings_hotkey = obs_hotkey_register_frontend(
 		"kori.open_settings", "Kori: Open settings for current source",
 		on_open_settings_hotkey, nullptr);
+	load_hotkey_binding(play_hotkey, "kori.play");
+	load_hotkey_binding(reset_hotkey, "kori.reset");
+	load_hotkey_binding(open_settings_hotkey, "kori.open_settings");
 	obs_frontend_add_tools_menu_item("Kori Settings",
 					 on_open_settings, nullptr);
 	obs_frontend_add_event_callback(on_frontend_event, nullptr);
@@ -425,6 +476,7 @@ bool obs_module_load(void)
 
 void obs_module_unload(void)
 {
+	save_hotkey_bindings();
 	obs_frontend_remove_event_callback(on_frontend_event, nullptr);
 	obs_remove_tick_callback(on_tick, nullptr);
 	if (play_hotkey != OBS_INVALID_HOTKEY_ID)

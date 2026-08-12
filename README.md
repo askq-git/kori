@@ -18,7 +18,7 @@ logos, videos and overlays.
 
 ## Download
 
-**[Download Kori for Windows](https://github.com/askq-git/kori/releases/download/v0.10.0/Kori-0.10.0-Windows-x64.zip)**
+**[Download Kori 0.12 for Windows](https://github.com/askq-git/kori/releases/download/v0.12.0/Kori-0.12.0-Windows-x64.zip)**
 
 Kori works with:
 
@@ -45,7 +45,8 @@ show an unrecognized-app warning. Only download Kori from this GitHub page.
 3. Choose the camera or item you want to zoom.
 4. Click or drag the red target onto the person's face or another point of
    interest.
-5. Adjust the zoom amount and speed.
+5. Choose a ready-made **Camera style**, or open **Fine-tune** to adjust
+   zoom, timing, movement and motion blur.
 6. Use **Preview Zoom** and **Preview Return** to check the result.
 7. Choose **Save & Close**.
 8. Open **Settings > Hotkeys** and assign keys for:
@@ -79,6 +80,8 @@ the scene zoomed in, or have it wait and return automatically.
 | Manual hotkey control | Yes |
 | Automatic zoom when a scene becomes active | Yes |
 | Zoom an individual item or the entire scene | Yes |
+| Ready-made camera movement styles | Yes |
+| Motion blur during movement | Yes |
 
 ## Frequently asked questions
 

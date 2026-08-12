@@ -12,17 +12,62 @@
 #include <QDoubleSpinBox>
 #include <QFrame>
 #include <QFormLayout>
+#include <QGridLayout>
+#include <QGroupBox>
 #include <QLabel>
 #include <QLayout>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QScrollArea>
 #include <QSignalBlocker>
+#include <QToolButton>
 #include <QVBoxLayout>
 
 #include <cmath>
 
 namespace kori {
+
+namespace {
+
+int matching_starting_style(const AnimationSettings &value)
+{
+	const auto close = [](const float left, const float right) {
+		return std::abs(left - right) < 0.01F;
+	};
+	if (close(value.zoom_factor, 1.25F) &&
+	    close(value.zoom_duration, 3.5F) &&
+	    close(value.return_duration, 2.5F) &&
+	    value.easing == EasingPreset::Smooth &&
+	    value.motion_blur == MotionBlurPreset::Subtle)
+		return 1;
+	if (close(value.zoom_factor, 1.40F) &&
+	    close(value.zoom_duration, 6.0F) &&
+	    close(value.return_duration, 3.0F) &&
+	    value.easing == EasingPreset::SlowBurn &&
+	    value.motion_blur == MotionBlurPreset::Cinematic)
+		return 2;
+	if (close(value.zoom_factor, 1.18F) &&
+	    close(value.zoom_duration, 4.5F) &&
+	    close(value.return_duration, 2.5F) &&
+	    value.easing == EasingPreset::Cinematic &&
+	    value.motion_blur == MotionBlurPreset::Subtle)
+		return 3;
+	if (close(value.zoom_factor, 1.35F) &&
+	    close(value.zoom_duration, 0.5F) &&
+	    close(value.return_duration, 0.6F) &&
+	    value.easing == EasingPreset::Punch &&
+	    value.motion_blur == MotionBlurPreset::Strong)
+		return 4;
+	if (close(value.zoom_factor, 1.55F) &&
+	    close(value.zoom_duration, 8.0F) &&
+	    close(value.return_duration, 3.0F) &&
+	    value.easing == EasingPreset::SlowBurn &&
+	    value.motion_blur == MotionBlurPreset::Subtle)
+		return 5;
+	return 0;
+}
+
+} // namespace
 
 void show_settings_dialog(
 	QWidget *parent, const std::string &scene_name,
@@ -98,7 +143,57 @@ void show_settings_dialog(
 	settings_scroll->setWidgetResizable(true);
 	settings_scroll->setFrameShape(QFrame::NoFrame);
 	auto *settings_panel = new QWidget(settings_scroll);
-	auto *form = new QFormLayout(settings_panel);
+	auto *settings_layout = new QVBoxLayout(settings_panel);
+	settings_layout->setContentsMargins(0, 0, 0, 0);
+
+	auto *camera_group = new QGroupBox("Camera movement", settings_panel);
+	auto *camera_layout = new QVBoxLayout(camera_group);
+	auto *camera_form = new QFormLayout();
+	camera_layout->addLayout(camera_form);
+	auto *starting_style = new QComboBox(&dialog);
+	starting_style->addItems({"Custom", "Natural Push", "Slow Drama",
+				  "Documentary Push", "Punch In",
+				  "Awkward Zoom"});
+	auto *style_help = new QLabel(
+		"Choose a ready-made camera movement, or fine-tune the settings "
+		"to create your own.",
+		camera_group);
+	style_help->setWordWrap(true);
+	auto *summary_panel = new QFrame(camera_group);
+	summary_panel->setObjectName("cameraStyleSummary");
+	summary_panel->setStyleSheet(
+		"QFrame#cameraStyleSummary { border: 1px solid palette(mid); "
+		"border-radius: 5px; background: palette(base); }");
+	auto *summary_layout = new QGridLayout(summary_panel);
+	summary_layout->setContentsMargins(12, 9, 12, 9);
+	summary_layout->setHorizontalSpacing(20);
+	summary_layout->setVerticalSpacing(7);
+	const auto make_summary_value = [summary_panel, summary_layout](
+					const QString &label, const int column) {
+		auto *caption = new QLabel(label, summary_panel);
+		caption->setEnabled(false);
+		caption->setStyleSheet("font-size: 10px;");
+		auto *value = new QLabel(summary_panel);
+		value->setStyleSheet("font-weight: 600;");
+		summary_layout->addWidget(caption, 0, column);
+		summary_layout->addWidget(value, 1, column);
+		summary_layout->setColumnStretch(column, 1);
+		return value;
+	};
+	auto *summary_zoom = make_summary_value("ZOOM", 0);
+	auto *summary_in = make_summary_value("ZOOM IN", 1);
+	auto *summary_return = make_summary_value("RETURN", 2);
+	auto *summary_curve = make_summary_value("MOVEMENT", 3);
+	auto *summary_blur = make_summary_value("BLUR", 4);
+	auto *fine_tune = new QToolButton(camera_group);
+	fine_tune->setText("Fine-tune");
+	fine_tune->setCheckable(true);
+	fine_tune->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	fine_tune->setArrowType(Qt::RightArrow);
+	fine_tune->setAutoRaise(true);
+	fine_tune->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
+	auto *fine_tune_panel = new QWidget(camera_group);
+	auto *fine_tune_form = new QFormLayout(fine_tune_panel);
 	auto *zoom = new QDoubleSpinBox(&dialog);
 	zoom->setRange(1.01, 3.00);
 	zoom->setSingleStep(0.05);
@@ -128,6 +223,37 @@ void show_settings_dialog(
 	motion_blur->setCurrentIndex(static_cast<int>(settings.motion_blur));
 	motion_blur->setToolTip(
 		"Adds natural directional softness only while the camera is moving.");
+
+	auto *movement_help = new QLabel(&dialog);
+	movement_help->setWordWrap(true);
+	const auto update_movement_help = [easing, movement_help]() {
+		switch (static_cast<EasingPreset>(easing->currentIndex())) {
+		case EasingPreset::Cinematic:
+			movement_help->setText(
+				"A gentle beginning and polished landing.");
+			break;
+		case EasingPreset::SlowBurn:
+			movement_help->setText(
+				"Starts almost unnoticed, then gradually builds intensity.");
+			break;
+		case EasingPreset::Punch:
+			movement_help->setText(
+				"Moves immediately, with a small overshoot and settle.");
+			break;
+		case EasingPreset::Linear:
+			movement_help->setText(
+				"Moves at a constant, mechanical speed.");
+			break;
+		case EasingPreset::Smooth:
+		default:
+			movement_help->setText(
+				"Balanced acceleration and a smooth finish.");
+			break;
+		}
+	};
+	QObject::connect(easing, &QComboBox::currentIndexChanged, &dialog,
+			 [update_movement_help](int) { update_movement_help(); });
+	update_movement_help();
 
 	auto *activation = new QComboBox(&dialog);
 	activation->addItems({"Manual / hotkey only",
@@ -215,11 +341,6 @@ void show_settings_dialog(
 					 static_cast<float>(focus_y->value() /
 							    100.0));
 			 });
-	QObject::connect(advanced, &QCheckBox::toggled, &dialog,
-			 [form, focus_x, focus_y](const bool visible) {
-				 form->setRowVisible(focus_x, visible);
-				 form->setRowVisible(focus_y, visible);
-			 });
 	preview->set_change_callback(
 		[focus_x, focus_y, preset, &dirty](const float x, const float y) {
 			const QSignalBlocker block_x(focus_x);
@@ -248,22 +369,81 @@ void show_settings_dialog(
 	else
 		preset->setCurrentIndex(4);
 
-	form->addRow("Zoom amount", zoom);
-	form->addRow("Zoom duration", duration);
-	form->addRow("Return duration", return_duration);
-	form->addRow("Motion style", easing);
-	form->addRow("Motion blur", motion_blur);
-	form->addRow("Activation", activation);
-	form->addRow("Start delay", start_delay);
-	form->addRow("After automatic zoom", completion);
-	form->addRow("Hold duration", hold_duration);
-	form->addRow(reset_on_exit);
-	form->addRow("Focus preset", preset);
-	form->addRow(advanced);
-	form->addRow("Focus horizontal", focus_x);
-	form->addRow("Focus vertical", focus_y);
-	form->setRowVisible(focus_x, false);
-	form->setRowVisible(focus_y, false);
+	camera_form->addRow("Camera style", starting_style);
+	camera_layout->addWidget(style_help);
+	camera_layout->addWidget(summary_panel);
+	camera_layout->addWidget(fine_tune);
+	camera_layout->addWidget(fine_tune_panel);
+	fine_tune_form->addRow("Zoom amount", zoom);
+	fine_tune_form->addRow("Zoom duration", duration);
+	fine_tune_form->addRow("Return duration", return_duration);
+	fine_tune_form->addRow("Movement curve", easing);
+	fine_tune_form->addRow("", movement_help);
+	fine_tune_form->addRow("Motion blur", motion_blur);
+
+	auto *playback_group = new QGroupBox("Playback", settings_panel);
+	auto *playback_form = new QFormLayout(playback_group);
+	playback_form->addRow("Activation", activation);
+	playback_form->addRow("Start delay", start_delay);
+	playback_form->addRow("After automatic zoom", completion);
+	playback_form->addRow("Hold duration", hold_duration);
+	playback_form->addRow(reset_on_exit);
+
+	auto *focus_group = new QGroupBox("Focus", settings_panel);
+	auto *focus_form = new QFormLayout(focus_group);
+	focus_form->addRow("Focus preset", preset);
+	focus_form->addRow(advanced);
+	focus_form->addRow("Focus horizontal", focus_x);
+	focus_form->addRow("Focus vertical", focus_y);
+	focus_form->setRowVisible(focus_x, false);
+	focus_form->setRowVisible(focus_y, false);
+	QObject::connect(advanced, &QCheckBox::toggled, &dialog,
+			 [focus_form, focus_x, focus_y](const bool visible) {
+				 focus_form->setRowVisible(focus_x, visible);
+				 focus_form->setRowVisible(focus_y, visible);
+			 });
+
+	const auto update_style_summary =
+		[zoom, duration, return_duration, easing, motion_blur,
+		 summary_zoom, summary_in, summary_return, summary_curve,
+		 summary_blur]() {
+			const QString curve = easing->currentText()
+						  .replace(" (current)", "")
+						  .replace(" (overshoot)", "");
+			summary_zoom->setText(
+				QString("%1x").arg(zoom->value(), 0, 'f', 2));
+			summary_in->setText(
+				QString("%1 sec").arg(duration->value(), 0, 'f', 1));
+			summary_return->setText(QString("%1 sec").arg(
+				return_duration->value(), 0, 'f', 1));
+			summary_curve->setText(curve);
+			summary_blur->setText(motion_blur->currentText());
+		};
+	QObject::connect(fine_tune, &QToolButton::toggled, &dialog,
+			 [fine_tune, fine_tune_panel](const bool open) {
+				 fine_tune_panel->setVisible(open);
+				 fine_tune->setArrowType(open ? Qt::DownArrow :
+								 Qt::RightArrow);
+			 });
+	fine_tune_panel->setVisible(false);
+	QObject::connect(zoom, &QDoubleSpinBox::valueChanged, &dialog,
+			 [update_style_summary](double) { update_style_summary(); });
+	QObject::connect(duration, &QDoubleSpinBox::valueChanged, &dialog,
+			 [update_style_summary](double) { update_style_summary(); });
+	QObject::connect(return_duration, &QDoubleSpinBox::valueChanged,
+			 &dialog, [update_style_summary](double) {
+				 update_style_summary();
+			 });
+	QObject::connect(easing, &QComboBox::currentIndexChanged, &dialog,
+			 [update_style_summary](int) { update_style_summary(); });
+	QObject::connect(motion_blur, &QComboBox::currentIndexChanged, &dialog,
+			 [update_style_summary](int) { update_style_summary(); });
+	update_style_summary();
+
+	settings_layout->addWidget(camera_group);
+	settings_layout->addWidget(playback_group);
+	settings_layout->addWidget(focus_group);
+	settings_layout->addStretch();
 	settings_scroll->setWidget(settings_panel);
 	layout->addWidget(settings_scroll, 1);
 
@@ -322,6 +502,7 @@ void show_settings_dialog(
 			const QSignalBlocker block_return(return_duration);
 			const QSignalBlocker block_easing(easing);
 			const QSignalBlocker block_motion_blur(motion_blur);
+			const QSignalBlocker block_starting_style(starting_style);
 			const QSignalBlocker block_activation(activation);
 			const QSignalBlocker block_start_delay(start_delay);
 			const QSignalBlocker block_completion(completion);
@@ -337,6 +518,10 @@ void show_settings_dialog(
 			easing->setCurrentIndex(static_cast<int>(current.easing));
 			motion_blur->setCurrentIndex(
 				static_cast<int>(current.motion_blur));
+			starting_style->setCurrentIndex(
+				matching_starting_style(current));
+			fine_tune->setChecked(
+				matching_starting_style(current) == 0);
 			activation->setCurrentIndex(
 				static_cast<int>(current.activation));
 			start_delay->setValue(current.start_delay);
@@ -347,6 +532,7 @@ void show_settings_dialog(
 			focus_x->setValue(current.focus_x * 100.0);
 			focus_y->setValue(current.focus_y * 100.0);
 			preview->set_focus(current.focus_x, current.focus_y);
+			update_style_summary();
 
 			if (near(current.focus_x, 0.50F) &&
 			    near(current.focus_y, 0.28F))
@@ -365,20 +551,96 @@ void show_settings_dialog(
 			update_automation_controls();
 		};
 
+	starting_style->setCurrentIndex(matching_starting_style(settings));
+	fine_tune->setChecked(matching_starting_style(settings) == 0);
+	bool applying_starting_style = false;
+
 	const auto mark_dirty = [&dirty, save_status]() {
 		dirty = true;
 		save_status->setText("Unsaved changes");
 	};
+	const auto mark_style_custom =
+		[&applying_starting_style, starting_style, fine_tune,
+		 mark_dirty]() {
+			if (!applying_starting_style) {
+				const QSignalBlocker blocker(starting_style);
+				starting_style->setCurrentIndex(0);
+				fine_tune->setChecked(true);
+			}
+			mark_dirty();
+		};
+	QObject::connect(
+		starting_style, &QComboBox::currentIndexChanged, &dialog,
+		[&](const int index) {
+			if (index <= 0) {
+				fine_tune->setChecked(true);
+				return;
+			}
+			applying_starting_style = true;
+			switch (index) {
+			case 1:
+				zoom->setValue(1.25);
+				duration->setValue(3.5);
+				return_duration->setValue(2.5);
+				easing->setCurrentIndex(
+					static_cast<int>(EasingPreset::Smooth));
+				motion_blur->setCurrentIndex(
+					static_cast<int>(MotionBlurPreset::Subtle));
+				break;
+			case 2:
+				zoom->setValue(1.40);
+				duration->setValue(6.0);
+				return_duration->setValue(3.0);
+				easing->setCurrentIndex(
+					static_cast<int>(EasingPreset::SlowBurn));
+				motion_blur->setCurrentIndex(
+					static_cast<int>(MotionBlurPreset::Cinematic));
+				break;
+			case 3:
+				zoom->setValue(1.18);
+				duration->setValue(4.5);
+				return_duration->setValue(2.5);
+				easing->setCurrentIndex(
+					static_cast<int>(EasingPreset::Cinematic));
+				motion_blur->setCurrentIndex(
+					static_cast<int>(MotionBlurPreset::Subtle));
+				break;
+			case 4:
+				zoom->setValue(1.35);
+				duration->setValue(0.5);
+				return_duration->setValue(0.6);
+				easing->setCurrentIndex(
+					static_cast<int>(EasingPreset::Punch));
+				motion_blur->setCurrentIndex(
+					static_cast<int>(MotionBlurPreset::Strong));
+				break;
+			case 5:
+				zoom->setValue(1.55);
+				duration->setValue(8.0);
+				return_duration->setValue(3.0);
+				easing->setCurrentIndex(
+					static_cast<int>(EasingPreset::SlowBurn));
+				motion_blur->setCurrentIndex(
+					static_cast<int>(MotionBlurPreset::Subtle));
+				break;
+			default:
+				break;
+			}
+			applying_starting_style = false;
+			fine_tune->setChecked(false);
+			update_style_summary();
+			mark_dirty();
+		});
 	QObject::connect(zoom, &QDoubleSpinBox::valueChanged, &dialog,
-			 [mark_dirty](double) { mark_dirty(); });
+			 [mark_style_custom](double) { mark_style_custom(); });
 	QObject::connect(duration, &QDoubleSpinBox::valueChanged, &dialog,
-			 [mark_dirty](double) { mark_dirty(); });
+			 [mark_style_custom](double) { mark_style_custom(); });
 	QObject::connect(return_duration, &QDoubleSpinBox::valueChanged,
-			 &dialog, [mark_dirty](double) { mark_dirty(); });
+			 &dialog, [mark_style_custom](double) { mark_style_custom(); });
 	QObject::connect(easing, &QComboBox::currentIndexChanged, &dialog,
-			 [mark_dirty](int) { mark_dirty(); });
+			 [mark_style_custom](int) { mark_style_custom(); });
 	QObject::connect(motion_blur, &QComboBox::currentIndexChanged, &dialog,
-			 [mark_dirty](int) { mark_dirty(); });
+			 [mark_style_custom](int) { mark_style_custom(); });
 	QObject::connect(activation, &QComboBox::currentIndexChanged, &dialog,
 			 [mark_dirty](int) { mark_dirty(); });
 	QObject::connect(start_delay, &QDoubleSpinBox::valueChanged, &dialog,

@@ -37,13 +37,23 @@ if (Get-Process -Name "obs64" -ErrorAction SilentlyContinue) {
 }
 
 $targets = @(
-    (Join-Path $ObsPath "obs-plugins\64bit\kori.dll"),
-    (Join-Path $ObsPath "data\obs-plugins\kori\locale\en-US.ini"),
-    (Join-Path $ObsPath "data\obs-plugins\kori\effects\kori-motion-blur.effect")
+    @{ Name = "Kori plugin"; Path = (Join-Path $ObsPath "obs-plugins\64bit\kori.dll") },
+    @{ Name = "English interface text"; Path = (Join-Path $ObsPath "data\obs-plugins\kori\locale\en-US.ini") },
+    @{ Name = "Motion blur effect"; Path = (Join-Path $ObsPath "data\obs-plugins\kori\effects\kori-motion-blur.effect") },
+    @{ Name = "Installed version information"; Path = (Join-Path $ObsPath "data\obs-plugins\kori\version.txt") }
 )
+Write-Host ""
+Write-Host "Removing Kori files..."
 foreach ($target in $targets) {
-    if (Test-Path -LiteralPath $target) {
-        Remove-Item -LiteralPath $target -Force
+    if (Test-Path -LiteralPath $target.Path) {
+        Remove-Item -LiteralPath $target.Path -Force
+        if (Test-Path -LiteralPath $target.Path) {
+            throw "Kori uninstallation could not be verified: '$($target.Path)' remains."
+        }
+        Write-Host "  [Removed] $($target.Name)"
+    }
+    else {
+        Write-Host "  [Already absent] $($target.Name)"
     }
 }
 

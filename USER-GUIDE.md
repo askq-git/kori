@@ -6,12 +6,27 @@
 2. Open **Tools > Kori Settings**.
 3. Choose a **Target source**, or choose **Entire scene (everything)**.
 4. Click the important part of the preview.
-5. Choose the zoom amount and duration.
+5. Choose a **Camera style**.
 6. Click **Preview Zoom**, then **Preview Return**.
 7. Click **Apply**.
 8. Assign the Kori Play and Return actions under **Settings > Hotkeys**.
 
 That is enough for a manual production-quality zoom.
+
+## Camera styles and Fine-tune
+
+Camera Styles combine the zoom amount, zoom and return timing, movement curve
+and motion blur into one creative choice:
+
+- **Natural Push** - balanced movement for interviews and podcasts.
+- **Slow Drama** - a longer move that gradually builds intensity.
+- **Documentary Push** - subtle, restrained movement.
+- **Punch In** - fast movement with a small overshoot and settle.
+- **Awkward Zoom** - a deliberately long, increasingly uncomfortable push.
+
+The compact summary shows the values used by the selected style. Open
+**Fine-tune** to change them individually. Changing a style value switches the
+Camera style to **Custom** automatically.
 
 ## How Kori chooses what to animate
 
