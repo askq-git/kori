@@ -9,6 +9,8 @@ hotkey or automatically when a scene becomes active. Kori can return smoothly
 to the exact starting view, zoom one camera or move the whole scene—including
 logos, videos and overlays.
 
+**Official website:** [koricamera.com](https://koricamera.com/)
+
 ## See Kori in action
 
 | Manual cinematic zoom | Automatic zoom on scene change |
@@ -132,6 +134,7 @@ endorsed by the OBS Project.
 
 ## Help
 
+- [Visit the Kori website](https://koricamera.com/)
 - [Full user guide](USER-GUIDE.md)
 - [Help test the beta](BETA-TESTING.md)
 - [Fix a problem](TROUBLESHOOTING.md)
