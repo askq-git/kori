@@ -28,15 +28,15 @@ function Find-Executable {
         [string[]]$Candidates = @()
     )
 
-    $command = Get-Command $Name -ErrorAction SilentlyContinue
-    if ($command) {
-        return $command.Source
-    }
-
     foreach ($candidate in $Candidates) {
         if (Test-Path -LiteralPath $candidate) {
             return $candidate
         }
+    }
+
+    $command = Get-Command $Name -ErrorAction SilentlyContinue
+    if ($command) {
+        return $command.Source
     }
 
     throw "Required tool '$Name' was not found."
@@ -65,9 +65,10 @@ $git = Find-Executable -Name "git.exe" -Candidates @(
 )
 
 $cmake = Find-Executable -Name "cmake.exe" -Candidates @(
-    "C:\Program Files\CMake\bin\cmake.exe",
     "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe",
-    "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
+    "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe",
+    "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe",
+    "C:\Program Files\CMake\bin\cmake.exe"
 )
 
 $vsWhere = Find-Executable -Name "vswhere.exe" -Candidates @(
@@ -199,14 +200,18 @@ if ($InstallForCurrentUser) {
     $pluginRoot = Join-Path $env:APPDATA "obs-studio\plugins\kori"
     $pluginBin = Join-Path $pluginRoot "bin\64bit"
     $pluginLocale = Join-Path $pluginRoot "data\locale"
+    $pluginEffects = Join-Path $pluginRoot "data\effects"
 
     New-Item -ItemType Directory -Force -Path $pluginBin | Out-Null
     New-Item -ItemType Directory -Force -Path $pluginLocale | Out-Null
+    New-Item -ItemType Directory -Force -Path $pluginEffects | Out-Null
 
     Copy-Item -LiteralPath $pluginDll `
         -Destination (Join-Path $pluginBin "kori.dll") -Force
     Copy-Item -LiteralPath (Join-Path $projectRoot "data\locale\en-US.ini") `
         -Destination (Join-Path $pluginLocale "en-US.ini") -Force
+    Copy-Item -LiteralPath (Join-Path $projectRoot "data\effects\kori-motion-blur.effect") `
+        -Destination (Join-Path $pluginEffects "kori-motion-blur.effect") -Force
 
     Write-Host "Installed Kori for the current user: $pluginRoot"
 }
@@ -215,15 +220,22 @@ if ($InstallSystemWide) {
     $systemPluginBin = "C:\Program Files\obs-studio\obs-plugins\64bit"
     $systemPluginLocale =
         "C:\Program Files\obs-studio\data\obs-plugins\kori\locale"
+    $systemPluginEffects =
+        "C:\Program Files\obs-studio\data\obs-plugins\kori\effects"
 
     try {
         New-Item -ItemType Directory -Force `
             -Path $systemPluginLocale | Out-Null
+        New-Item -ItemType Directory -Force `
+            -Path $systemPluginEffects | Out-Null
         Copy-Item -LiteralPath $pluginDll `
             -Destination (Join-Path $systemPluginBin "kori.dll") -Force
         Copy-Item `
             -LiteralPath (Join-Path $projectRoot "data\locale\en-US.ini") `
             -Destination (Join-Path $systemPluginLocale "en-US.ini") -Force
+        Copy-Item `
+            -LiteralPath (Join-Path $projectRoot "data\effects\kori-motion-blur.effect") `
+            -Destination (Join-Path $systemPluginEffects "kori-motion-blur.effect") -Force
     } catch {
         throw "System-wide installation failed. Close OBS and run PowerShell as Administrator, then retry with -InstallSystemWide. $($_.Exception.Message)"
     }

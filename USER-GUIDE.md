@@ -13,6 +13,14 @@
 
 That is enough for a manual production-quality zoom.
 
+## Kori dock
+
+Open **Docks > Kori** for live controls. The dock follows the scene's saved
+Kori target and refreshes automatically when OBS opens, when the scene changes
+and when detailed settings are applied. Use it to Play, Return, or quickly
+adjust zoom amount, timing and movement curve. Click **Apply changes** to save
+an adjustment. Use **Set focus point** for the visual click-to-focus control.
+
 ## Camera styles and Fine-tune
 
 Camera Styles combine the zoom amount, zoom and return timing, movement curve
@@ -66,9 +74,12 @@ finishes and the scene reaches Program.
 
 ## Understanding the focus point
 
-The clicked point remains anchored where it currently appears while the target
-grows around it. Kori does not move that point to the centre. A focus point
-near an edge naturally causes more content to extend beyond the canvas.
+**Keep selected point in place** is the safe default. The clicked point remains
+anchored where it currently appears while the target grows around it.
+
+**Centre selected point** places the clicked point at the canvas centre when
+the zoom completes. Choose a sufficiently large zoom factor for the selected
+point so the source still covers the canvas; otherwise empty edges can appear.
 
 ## Safe live operation
 

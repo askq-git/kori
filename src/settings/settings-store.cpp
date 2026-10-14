@@ -19,7 +19,7 @@ constexpr const char *setting_names[] = {
 	"FocusX",          "FocusY",       "Easing",
 	"Activation",      "Completion",   "StartDelay",
 	"HoldDuration",    "ResetOnSceneExit",
-	"MotionBlur",
+	"MotionBlur",      "FramingMode",
 };
 
 void remove_settings(config_t *config, const char *section)
@@ -36,6 +36,10 @@ bool starts_with(const std::string &value, const char *prefix)
 void read_settings(config_t *config, const char *section,
 		   kori::AnimationSettings &settings)
 {
+	const bool has_existing_profile =
+		config_has_user_value(config, section, "ZoomFactor") ||
+		config_has_user_value(config, section, "FocusX") ||
+		config_has_user_value(config, section, "MotionBlur");
 	if (config_has_user_value(config, section, "ZoomFactor"))
 		settings.zoom_factor = static_cast<float>(
 			config_get_double(config, section, "ZoomFactor"));
@@ -96,6 +100,17 @@ void read_settings(config_t *config, const char *section,
 			settings.motion_blur =
 				static_cast<kori::MotionBlurPreset>(value);
 	}
+	if (config_has_user_value(config, section, "FramingMode")) {
+		const int value = static_cast<int>(
+			config_get_int(config, section, "FramingMode"));
+		if (value >= static_cast<int>(kori::FramingMode::CenterSelected) &&
+		    value <= static_cast<int>(kori::FramingMode::KeepSelectedInPlace))
+			settings.framing = static_cast<kori::FramingMode>(value);
+	} else if (has_existing_profile) {
+		// Pre-0.13 profiles used anchored focus placement. Preserve their
+		// finished composition when they are first loaded after upgrading.
+		settings.framing = kori::FramingMode::KeepSelectedInPlace;
+	}
 }
 
 void write_settings(config_t *config, const char *section,
@@ -121,6 +136,8 @@ void write_settings(config_t *config, const char *section,
 			settings.reset_on_scene_exit);
 	config_set_int(config, section, "MotionBlur",
 		       static_cast<int>(settings.motion_blur));
+	config_set_int(config, section, "FramingMode",
+		       static_cast<int>(settings.framing));
 }
 
 std::string scene_profile_section(const obs_source_t *scene_source)

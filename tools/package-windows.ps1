@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-    [string]$Version = "0.12.0"
+    [string]$Version = "0.12.0",
+    [string]$ReleaseNotes = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -56,6 +57,14 @@ $semanticVersion = ([regex]::Match($Version, '^\d+\.\d+\.\d+')).Value
 if (-not $semanticVersion) {
     throw "Version must begin with a semantic version such as 0.12.0."
 }
+
+if ([string]::IsNullOrWhiteSpace($ReleaseNotes)) {
+    $ReleaseNotes = "RELEASE-NOTES-$semanticVersion.md"
+}
+if (-not (Test-Path -LiteralPath (Join-Path $projectRoot $ReleaseNotes))) {
+    throw "Release notes '$ReleaseNotes' were not found."
+}
+
 $semanticVersion | Set-Content -LiteralPath (Join-Path $packageRoot "VERSION.txt") -Encoding ascii
 
 Copy-Item -LiteralPath $pluginDll `
@@ -70,7 +79,7 @@ $packageFiles = @(
     "LICENSE",
     "NOTICE.md",
     "README.md",
-    "RELEASE-NOTES-0.12.0.md",
+    $ReleaseNotes,
     "SECURITY.md",
     "SUPPORT.md",
     "TROUBLESHOOTING.md",

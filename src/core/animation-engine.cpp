@@ -239,6 +239,17 @@ void AnimationEngine::calculate_source_target(AnimatedItem &item)
 		item.start_position.x - world_x * (settings_.zoom_factor - 1.0F);
 	item.end_position.y =
 		item.start_position.y - world_y * (settings_.zoom_factor - 1.0F);
+
+	if (settings_.framing != FramingMode::CenterSelected)
+		return;
+
+	obs_video_info video{};
+	if (!obs_get_video_info(&video))
+		return;
+	item.end_position.x = static_cast<float>(video.base_width) * 0.5F -
+		world_x * settings_.zoom_factor;
+	item.end_position.y = static_cast<float>(video.base_height) * 0.5F -
+		world_y * settings_.zoom_factor;
 }
 
 void AnimationEngine::calculate_scene_target(AnimatedItem &item,
@@ -253,6 +264,10 @@ void AnimationEngine::calculate_scene_target(AnimatedItem &item,
 	item.end_position.y =
 		focus_y + (item.start_position.y - focus_y) *
 				  settings_.zoom_factor;
+	if (settings_.framing == FramingMode::CenterSelected) {
+		item.end_position.x += canvas_width * 0.5F - focus_x;
+		item.end_position.y += canvas_height * 0.5F - focus_y;
+	}
 
 	if (item.original_transform.bounds_type == OBS_BOUNDS_NONE) {
 		item.end_scale.x =

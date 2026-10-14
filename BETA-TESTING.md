@@ -1,12 +1,13 @@
 # Help test Kori
 
-## 0.12 priority checks
+## 0.13 priority checks
 
-- Camera Styles apply visibly different, production-appropriate movement.
-- Fine-tune expands cleanly and edited presets become Custom.
-- Motion blur appears only while the target is moving.
-- Play, Return and Open Settings hotkeys survive several OBS restarts.
-- Installing 0.12 over an older version preserves settings and hotkeys.
+- Keep selected point in place is the default and preserves the safe anchored
+  behaviour.
+- Centre selected point is tested only at a zoom level that keeps the source
+  covering the canvas.
+- Upgrading an existing profile does not change its finished composition.
+- Individual-source and whole-scene Return restore the exact starting view.
 - The installer correctly reports the current and incoming versions.
 
 Thanks for trying the Kori Windows beta.

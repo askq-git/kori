@@ -1,5 +1,6 @@
 param(
-    [string]$ObsPath = "C:\Program Files\obs-studio"
+    [string]$ObsPath = "C:\Program Files\obs-studio",
+    [string]$LogPath = (Join-Path $PSScriptRoot "Kori-install-error.txt")
 )
 
 $ErrorActionPreference = "Stop"
@@ -10,12 +11,32 @@ function Test-IsAdministrator {
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
+Remove-Item -LiteralPath $LogPath -Force -ErrorAction SilentlyContinue
+
+trap {
+    $details = @(
+        "Kori installation failed.",
+        "Time: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')",
+        "OBS folder: $ObsPath",
+        "",
+        "Reason:",
+        $_.Exception.Message
+    ) -join [Environment]::NewLine
+    Set-Content -LiteralPath $LogPath -Value $details -Encoding utf8
+    Write-Host ""
+    Write-Host $details -ForegroundColor Red
+    Write-Host ""
+    Write-Host "A copy was saved to: $LogPath"
+    exit 1
+}
+
 if (-not (Test-IsAdministrator)) {
     $arguments = @(
         "-NoProfile",
         "-ExecutionPolicy", "Bypass",
         "-File", "`"$PSCommandPath`"",
-        "-ObsPath", "`"$ObsPath`""
+        "-ObsPath", "`"$ObsPath`"",
+        "-LogPath", "`"$LogPath`""
     )
 
     try {

@@ -85,6 +85,16 @@ exit /b 1
 echo.
 echo Kori could not be installed.
 echo.
+if exist "%~dp0Kori-install-error.txt" (
+    echo Installer details:
+    echo ------------------
+    type "%~dp0Kori-install-error.txt"
+    echo ------------------
+    echo.
+    echo Copy the details above if you need help.
+) else (
+    echo No detailed installer report was created.
+)
 echo Make sure OBS Studio is closed, then try again.
 echo If the problem continues, contact kori.dev@askq.co.nz.
 echo.

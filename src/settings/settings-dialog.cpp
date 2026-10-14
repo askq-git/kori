@@ -391,6 +391,13 @@ void show_settings_dialog(
 
 	auto *focus_group = new QGroupBox("Focus", settings_panel);
 	auto *focus_form = new QFormLayout(focus_group);
+	auto *framing = new QComboBox(focus_group);
+	framing->addItem("Centre selected point");
+	framing->addItem("Keep selected point in place");
+	framing->setToolTip(
+		"Choose where the clicked subject appears when the zoom completes.");
+	framing->setCurrentIndex(static_cast<int>(settings.framing));
+	focus_form->addRow("Finished framing", framing);
 	focus_form->addRow("Focus preset", preset);
 	focus_form->addRow(advanced);
 	focus_form->addRow("Focus horizontal", focus_x);
@@ -484,6 +491,8 @@ void show_settings_dialog(
 			static_cast<EasingPreset>(easing->currentIndex());
 		current.motion_blur = static_cast<MotionBlurPreset>(
 			motion_blur->currentIndex());
+		current.framing =
+			static_cast<FramingMode>(framing->currentIndex());
 		current.activation =
 			static_cast<ActivationMode>(activation->currentIndex());
 		current.completion =
@@ -502,6 +511,7 @@ void show_settings_dialog(
 			const QSignalBlocker block_return(return_duration);
 			const QSignalBlocker block_easing(easing);
 			const QSignalBlocker block_motion_blur(motion_blur);
+			const QSignalBlocker block_framing(framing);
 			const QSignalBlocker block_starting_style(starting_style);
 			const QSignalBlocker block_activation(activation);
 			const QSignalBlocker block_start_delay(start_delay);
@@ -518,6 +528,7 @@ void show_settings_dialog(
 			easing->setCurrentIndex(static_cast<int>(current.easing));
 			motion_blur->setCurrentIndex(
 				static_cast<int>(current.motion_blur));
+			framing->setCurrentIndex(static_cast<int>(current.framing));
 			starting_style->setCurrentIndex(
 				matching_starting_style(current));
 			fine_tune->setChecked(
@@ -641,6 +652,8 @@ void show_settings_dialog(
 			 [mark_style_custom](int) { mark_style_custom(); });
 	QObject::connect(motion_blur, &QComboBox::currentIndexChanged, &dialog,
 			 [mark_style_custom](int) { mark_style_custom(); });
+	QObject::connect(framing, &QComboBox::currentIndexChanged, &dialog,
+			 [mark_dirty](int) { mark_dirty(); });
 	QObject::connect(activation, &QComboBox::currentIndexChanged, &dialog,
 			 [mark_dirty](int) { mark_dirty(); });
 	QObject::connect(start_delay, &QDoubleSpinBox::valueChanged, &dialog,

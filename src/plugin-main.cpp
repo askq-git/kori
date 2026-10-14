@@ -5,6 +5,7 @@
 #include "effects/motion-blur-filter.hpp"
 #include "obs/main-canvas-target-resolver.hpp"
 #include "settings/settings-dialog.hpp"
+#include "settings/live-controls-dock.hpp"
 #include "settings/settings-store.hpp"
 
 #include <QApplication>
@@ -12,6 +13,7 @@
 #include <QMetaObject>
 #include <QWidget>
 #include <memory>
+#include <optional>
 #include <obs-frontend-api.h>
 #include <obs-module.h>
 #include <string>
@@ -31,6 +33,7 @@ namespace {
 
 std::unique_ptr<kori::AnimationEngine> engine;
 std::unique_ptr<kori::MainCanvasTargetResolver> resolver;
+kori::LiveControlsDock *live_controls_dock = nullptr;
 kori::SettingsStore settings_store;
 obs_hotkey_id play_hotkey = OBS_INVALID_HOTKEY_ID;
 obs_hotkey_id reset_hotkey = OBS_INVALID_HOTKEY_ID;
@@ -161,9 +164,13 @@ void on_frontend_event(const enum obs_frontend_event event, void *)
 	case OBS_FRONTEND_EVENT_SCENE_CHANGED:
 		engine->handle_scene_exit();
 		trigger_current_scene_if_configured();
+		if (live_controls_dock)
+			live_controls_dock->refresh();
 		break;
 	case OBS_FRONTEND_EVENT_FINISHED_LOADING:
 		trigger_current_scene_if_configured();
+		if (live_controls_dock)
+			live_controls_dock->refresh();
 		break;
 	case OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGING:
 		engine->handle_scene_exit();
@@ -241,6 +248,75 @@ void on_tick(void *, float seconds)
 }
 
 void on_open_settings(void *);
+
+std::optional<kori::AnimationSettings> load_dock_settings()
+{
+	if (!resolver)
+		return std::nullopt;
+	obs_source_t *scene_source = obs_frontend_get_current_scene();
+	if (!scene_source)
+		return std::nullopt;
+
+	const int64_t saved_id =
+		settings_store.manual_target_item_id_for(scene_source);
+	if (saved_id == kori::EntireSceneTargetId) {
+		auto settings = settings_store.load_for_scene(scene_source);
+		obs_source_release(scene_source);
+		return settings;
+	}
+	if (saved_id >= 0) {
+		auto saved = resolver->resolve_item_by_id(saved_id);
+		if (saved) {
+			auto settings = settings_store.load_for(saved->get());
+			obs_source_release(scene_source);
+			return settings;
+		}
+	}
+	auto selected = resolver->resolve_selected_item(false);
+	if (selected) {
+		auto settings = settings_store.load_for(selected->get());
+		obs_source_release(scene_source);
+		return settings;
+	}
+	obs_source_release(scene_source);
+	return std::nullopt;
+}
+
+bool save_dock_settings(const kori::AnimationSettings &settings)
+{
+	if (!resolver || !engine)
+		return false;
+	obs_source_t *scene_source = obs_frontend_get_current_scene();
+	if (!scene_source)
+		return false;
+
+	const int64_t saved_id =
+		settings_store.manual_target_item_id_for(scene_source);
+	if (saved_id == kori::EntireSceneTargetId) {
+		settings_store.save_for_scene(scene_source, settings);
+		engine->set_settings(settings);
+		obs_source_release(scene_source);
+		return true;
+	}
+	if (saved_id >= 0) {
+		auto saved = resolver->resolve_item_by_id(saved_id);
+		if (saved) {
+			settings_store.save_for(saved->get(), settings);
+			engine->set_settings(settings);
+			obs_source_release(scene_source);
+			return true;
+		}
+	}
+	auto selected = resolver->resolve_selected_item(false);
+	if (!selected) {
+		obs_source_release(scene_source);
+		return false;
+	}
+	settings_store.save_for(selected->get(), settings);
+	engine->set_settings(settings);
+	obs_source_release(scene_source);
+	return true;
+}
 
 void on_open_settings_hotkey(void *, obs_hotkey_id, obs_hotkey_t *,
 			     const bool pressed)
@@ -364,6 +440,8 @@ void on_open_settings(void *)
 				settings_store.save_for_scene(current_scene,
 							      updated);
 				engine->set_settings(updated);
+				if (live_controls_dock)
+					live_controls_dock->refresh();
 				blog(LOG_INFO,
 				     "[Kori] Whole-scene profile applied: scene='%s', zoom=%.2fx, duration=%.1fs, focus=(%.0f%%, %.0f%%)",
 				     obs_source_get_name(current_scene),
@@ -383,6 +461,8 @@ void on_open_settings(void *)
 			}
 			settings_store.save_for(saved_target->get(), updated);
 			engine->set_settings(updated);
+			if (live_controls_dock)
+				live_controls_dock->refresh();
 			obs_source_t *source = obs_sceneitem_get_source(
 				saved_target->get());
 			blog(LOG_INFO,
@@ -424,6 +504,8 @@ void on_open_settings(void *)
 		}
 		if (engine)
 			engine->set_settings(defaults);
+		if (live_controls_dock)
+			live_controls_dock->refresh();
 		blog(LOG_INFO, "[Kori] Restored factory defaults for current target");
 		return defaults;
 	};
@@ -431,6 +513,8 @@ void on_open_settings(void *)
 		settings_store.reset_all();
 		if (engine)
 			engine->set_settings(kori::AnimationSettings{});
+		if (live_controls_dock)
+			live_controls_dock->refresh();
 		blog(LOG_INFO, "[Kori] Reset all saved Kori settings");
 	};
 	kori::show_settings_dialog(
@@ -463,6 +547,29 @@ bool obs_module_load(void)
 	load_hotkey_binding(open_settings_hotkey, "kori.open_settings");
 	obs_frontend_add_tools_menu_item("Kori Settings",
 					 on_open_settings, nullptr);
+	live_controls_dock = new kori::LiveControlsDock(
+		[]() { on_play_hotkey(nullptr, OBS_INVALID_HOTKEY_ID, nullptr, true); },
+		[]() { on_reset_hotkey(nullptr, OBS_INVALID_HOTKEY_ID, nullptr, true); },
+		[]() { return load_dock_settings(); },
+		[](const kori::AnimationSettings &settings) {
+			return save_dock_settings(settings);
+		},
+		[]() { on_open_settings(nullptr); });
+	if (!obs_frontend_add_dock_by_id("kori.live-controls", "Kori",
+					 live_controls_dock)) {
+		delete live_controls_dock;
+		live_controls_dock = nullptr;
+		blog(LOG_WARNING, "[Kori] Could not add the live controls dock");
+	}
+	// Module load can precede OBS restoring the active scene. Queue one refresh
+	// so an open Kori dock shows the saved target as soon as OBS is ready.
+	QMetaObject::invokeMethod(
+		QApplication::instance(),
+		[]() {
+			if (live_controls_dock)
+				live_controls_dock->refresh();
+		},
+		Qt::QueuedConnection);
 	obs_frontend_add_event_callback(on_frontend_event, nullptr);
 	obs_add_tick_callback(on_tick, nullptr);
 
@@ -478,6 +585,13 @@ void obs_module_unload(void)
 {
 	save_hotkey_bindings();
 	obs_frontend_remove_event_callback(on_frontend_event, nullptr);
+	if (live_controls_dock) {
+		obs_frontend_remove_dock("kori.live-controls");
+		// OBS owns the QDockWidget wrapper and deletes the supplied widget when
+		// the dock is removed. Deleting it here causes a second Qt destruction
+		// during module unload.
+		live_controls_dock = nullptr;
+	}
 	obs_remove_tick_callback(on_tick, nullptr);
 	if (play_hotkey != OBS_INVALID_HOTKEY_ID)
 		obs_hotkey_unregister(play_hotkey);

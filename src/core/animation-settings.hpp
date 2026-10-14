@@ -34,6 +34,11 @@ enum class MotionBlurPreset {
 	Strong = 3,
 };
 
+enum class FramingMode {
+	CenterSelected = 0,
+	KeepSelectedInPlace = 1,
+};
+
 struct AnimationSettings {
 	float zoom_factor = 1.30F;
 	float zoom_duration = 5.0F;
@@ -47,6 +52,10 @@ struct AnimationSettings {
 	float hold_duration = 1.0F;
 	bool reset_on_scene_exit = true;
 	MotionBlurPreset motion_blur = MotionBlurPreset::Off;
+	// Anchored focus is the safe default: it keeps a normal source covering
+	// the canvas at common zoom levels. Centre framing remains available as
+	// an explicit composition choice.
+	FramingMode framing = FramingMode::KeepSelectedInPlace;
 };
 
 } // namespace kori
