@@ -20,7 +20,10 @@ logos, videos and overlays.
 
 ## Download
 
-**[Download Kori 0.12 for Windows](https://github.com/askq-git/kori/releases/download/v0.12.0/Kori-0.12.0-Windows-x64.zip)**
+**[Download Kori 0.13 for Windows](https://github.com/askq-git/kori/releases/download/v0.13.0/Kori-0.13.0-Windows-x64.zip)**
+
+This is a Windows beta release. See the [0.13 release notes](RELEASE-NOTES-0.13.0.md)
+for the new dock controls, centred-focus option and installer improvements.
 
 Kori works with:
 
@@ -57,6 +60,14 @@ show an unrecognized-app warning. Only download Kori from this GitHub page.
 
 Press your Play hotkey to zoom in and your Return hotkey to move back out.
 
+## Use the Kori dock for live control
+
+Open **Docks > Kori** for quick live controls. The dock gives you Play and
+Return buttons, plus zoom amount, zoom-in time, return time and movement-curve
+controls. It automatically follows the scene's saved Kori target when OBS
+opens or the scene changes. Click **Apply changes** to save a refinement, or
+use **Set focus point** to open the visual focus picker.
+
 ## Zoom automatically when a scene appears
 
 Kori can start an animation as soon as you switch to a scene.
@@ -84,6 +95,8 @@ the scene zoomed in, or have it wait and return automatically.
 | Zoom an individual item or the entire scene | Yes |
 | Ready-made camera movement styles | Yes |
 | Motion blur during movement | Yes |
+| Dockable live controls | Yes |
+| Centre a clicked focus point | Yes, with sufficient zoom |
 
 ## Frequently asked questions
 
