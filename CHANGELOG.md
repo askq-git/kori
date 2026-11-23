@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.13.1
+
+- Fixed source zoom framing for cameras and other sources configured with OBS
+  bounding-box transforms, including common “fit to screen” camera layouts.
+
+## 0.13.0
+
+- Added centre-selected-point framing and the dockable Kori live-controls
+  panel.
+- Improved Windows installation diagnostics and local release packaging.
+
 ## 0.12.0
 
 - Added five ready-made Camera Styles: Natural Push, Slow Drama,

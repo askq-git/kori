@@ -233,8 +233,18 @@ void AnimationEngine::calculate_source_target(AnimatedItem &item)
 	const float world_y =
 		std::sin(radians) * local_x + std::cos(radians) * local_y;
 
-	item.end_scale.x = item.start_scale.x * settings_.zoom_factor;
-	item.end_scale.y = item.start_scale.y * settings_.zoom_factor;
+	if (item.original_transform.bounds_type == OBS_BOUNDS_NONE) {
+		item.end_scale.x = item.start_scale.x * settings_.zoom_factor;
+		item.end_scale.y = item.start_scale.y * settings_.zoom_factor;
+	} else {
+		// OBS recalculates the scene-item scale to fit a bounded source.
+		// Scaling the item itself is therefore cancelled by that fit. Grow the
+		// bounds instead, while keeping the original item scale intact.
+		item.end_bounds.x =
+			item.start_bounds.x * settings_.zoom_factor;
+		item.end_bounds.y =
+			item.start_bounds.y * settings_.zoom_factor;
+	}
 	item.end_position.x =
 		item.start_position.x - world_x * (settings_.zoom_factor - 1.0F);
 	item.end_position.y =
