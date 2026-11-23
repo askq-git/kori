@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.2
+
+- Fixed the 0.13.1 bounded-source regression that could move a fitted camera
+  without correctly applying the zoom.
+
 ## 0.13.1
 
 - Fixed source zoom framing for cameras and other sources configured with OBS

@@ -432,6 +432,8 @@ void AnimationEngine::tick(const float seconds)
 			obs_sceneitem_set_pos(item.target->get(), &current.pos);
 			obs_sceneitem_set_scale(item.target->get(),
 						&current.scale);
+			obs_sceneitem_set_bounds(item.target->get(),
+						 &current.bounds);
 		}
 	}
 

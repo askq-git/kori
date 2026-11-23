@@ -20,9 +20,9 @@ logos, videos and overlays.
 
 ## Download
 
-**[Download Kori 0.13 for Windows](https://github.com/askq-git/kori/releases/download/v0.13.0/Kori-0.13.0-Windows-x64.zip)**
+**[Download Kori 0.13.2 for Windows](https://github.com/askq-git/kori/releases/download/v0.13.2/Kori-0.13.2-Windows-x64.zip)**
 
-This is a Windows beta release. See the [0.13 release notes](RELEASE-NOTES-0.13.0.md)
+This is a Windows beta release. See the [0.13.2 release notes](RELEASE-NOTES-0.13.2.md)
 for the new dock controls, centred-focus option and installer improvements.
 
 Kori works with:
